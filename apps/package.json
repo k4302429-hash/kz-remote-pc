@@ -1,0 +1,9 @@
+{
+  "name": "kz-remote-pc",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev:server & npm run dev:web",
+    "install:all": "npm install"
+  }
+}

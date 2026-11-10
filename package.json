@@ -1,0 +1,18 @@
+{
+  "name": "kz-remote-pc",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace apps/web run dev",
+    "dev:server": "npm --workspace apps/server run dev",
+    "dev:windows": "npm --workspace apps/windows-agent run dev",
+    "build:web": "npm --workspace apps/web run build",
+    "build:server": "npm --workspace apps/server run build",
+    "build:windows": "npm --workspace apps/windows-agent run build:win",
+    "build": "npm run build:web && npm run build:server && npm run build:windows",
+    "start": "npm --workspace apps/server run start"
+  }
+}
