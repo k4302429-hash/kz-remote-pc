@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KZ Remote PC Agent</title>
+    <style>
+      :root {
+        --bg: #08111f;
+        --panel: rgba(15, 27, 45, 0.92);
+        --line: rgba(130, 160, 205, 0.25);
+        --text: #ecf4ff;
+        --muted: #a9bedc;
+        --primary: #5aa6ff;
+        --success: #23d186;
+        --danger: #f26464;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: 'Segoe UI', sans-serif;
+        background: radial-gradient(circle at top, rgba(90, 166, 255, 0.18), transparent 20%), var(--bg);
+        color: var(--text);
+      }
+
+      .app {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 24px;
+      }
+
+      .panel {
+        width: min(940px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        padding: 20px 22px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.28);
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .pill {
+        padding: 9px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .pill.active { color: var(--success); }
+      .row {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 18px;
+      }
+
+      .card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 16px;
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      label {
+        color: var(--muted);
+      }
+
+      input, button {
+        font: inherit;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.04);
+        color: var(--text);
+      }
+
+      .button-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+
+      button {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+      }
+
+      .primary {
+        background: linear-gradient(135deg, #5aa6ff, #3d75d3);
+        color: #fff;
+        font-weight: 700;
+      }
+
+      .secondary {
+        background: rgba(255,255,255,0.05);
+        color: var(--text);
+      }
+
+      .danger {
+        background: rgba(242,100,100,0.12);
+        color: #ffd5d5;
+      }
+
+      .status-box {
+        display: grid;
+        gap: 8px;
+      }
+
+      .status-box .line {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--line);
+      }
+
+      .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--danger);
+        box-shadow: 0 0 12px rgba(242,100,100,0.8);
+      }
+
+      .dot.online { background: var(--success); box-shadow: 0 0 12px rgba(35,209,134,0.8); }
+      .screen {
+        min-height: 260px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        background: linear-gradient(180deg, rgba(5,12,22,0.9), rgba(12,18,31,0.9));
+      }
+
+      @media (max-width: 720px) {
+        .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="panel">
+        <div class="header">
+          <div>
+            <div style="color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.7rem;">Cliente Windows</div>
+            <h2 style="margin: 6px 0 0;">KZ Remote PC Agent</h2>
+          </div>
+          <div class="pill active" id="status-pill">Offline</div>
+        </div>
+
+        <div class="row">
+          <div class="card">
+            <div class="field">
+              <label>Nome do computador</label>
+              <input id="device-name" value="Meu PC principal" />
+            </div>
+            <div class="field">
+              <label>Versão do Windows</label>
+              <input id="device-os" value="Windows 11 Pro" />
+            </div>
+            <div class="button-row">
+              <button class="primary" id="register-btn">Registrar computador</button>
+              <button class="secondary" id="start-btn">Autorizar conexão</button>
+              <button class="danger" id="disconnect-btn">Desconectar</button>
+            </div>
+          </div>
+
+          <div class="card status-box">
+            <div class="line"><span>Conexão</span><span class="dot" id="signal-dot"></span></div>
+            <div class="line"><span>Usuário</span><strong id="owner-label">Nenhum</strong></div>
+            <div class="line"><span>Device ID</span><strong id="device-id-label">-</strong></div>
+            <div class="line"><span>Última ação</span><strong id="last-action">Aguardando</strong></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 18px;">
+          <h3 style="margin-bottom: 14px;">Visualização local</h3>
+          <div class="screen" id="local-screen">A tela do Windows será exibida aqui quando a conexão iniciar.</div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>
