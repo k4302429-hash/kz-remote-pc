@@ -31,6 +31,10 @@ function App() {
     email: 'demo@kzremote.com',
     password: 'demo123',
   });
+  const [newDevice, setNewDevice] = useState({
+    name: 'Meu PC principal',
+    os: 'Windows 11 Pro',
+  });
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem('kz-user');
     return stored ? JSON.parse(stored) : null;
@@ -45,18 +49,38 @@ function App() {
   const wsRef = useRef(null);
   const pcRef = useRef(null);
 
+  const restoreSession = async () => {
+    const token = localStorage.getItem('kz-token');
+    if (!token) return;
+
+    try {
+      const data = await apiFetch('/auth/me');
+      setUser(data.user);
+      setStatus('Sessão restaurada com segurança');
+    } catch (error) {
+      localStorage.removeItem('kz-token');
+      localStorage.removeItem('kz-user');
+      setUser(null);
+    }
+  };
+
   const loadDevices = async () => {
     if (!user) return;
     try {
       const data = await apiFetch('/devices');
       setDevices(data.devices || []);
-      if (!selectedDeviceId && data.devices.length) {
-        setSelectedDeviceId(data.devices[0].id);
-      }
+      setSelectedDeviceId((current) => {
+        if (current && data.devices.some((device) => device.id === current)) return current;
+        return data.devices[0]?.id || '';
+      });
     } catch (e) {
       setStatus(e.message);
     }
   };
+
+  useEffect(() => {
+    restoreSession();
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -110,18 +134,13 @@ function App() {
             socket.send(JSON.stringify({
               type: 'signal',
               targetDeviceId: deviceId,
-              deviceId: deviceId,
+              deviceId,
               signal: {
                 type: 'answer',
                 sdp: answer.sdp,
               },
             }));
           }
-        }
-
-        if (message.type === 'device-status') {
-          setStatus(`Dispositivo ${message.device.name}: ${message.device.status}`);
-          await loadDevices();
         }
       } catch (e) {
         console.error('WS message error', e);
@@ -136,6 +155,11 @@ function App() {
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleNewDeviceChange = (event) => {
+    const { name, value } = event.target;
+    setNewDevice((current) => ({ ...current, [name]: value }));
   };
 
   const submitAuth = async (event) => {
@@ -209,6 +233,21 @@ function App() {
     localStorage.removeItem('kz-user');
     setUser(null);
     setStatus('Sessão encerrada');
+  };
+
+  const registerNewDevice = async () => {
+    try {
+      const response = await apiFetch('/devices/register', {
+        method: 'POST',
+        body: JSON.stringify(newDevice),
+      });
+      setSelectedDeviceId(response.device.id);
+      setStatus(`Computador registrado: ${response.device.name}`);
+      await loadDevices();
+      setNewDevice({ name: 'Meu PC principal', os: 'Windows 11 Pro' });
+    } catch (e) {
+      setError(e.message);
+    }
   };
 
   const createPeerConnection = async (deviceId) => {
@@ -427,6 +466,15 @@ function App() {
           <div className="metric-card">
             <span>Conexão</span>
             <strong>{pcRef.current ? 'ativa' : 'inativa'}</strong>
+          </div>
+        </section>
+
+        <section className="register-box">
+          <h3>Registrar novo computador</h3>
+          <div className="register-form">
+            <input name="name" value={newDevice.name} onChange={handleNewDeviceChange} placeholder="Nome do computador" />
+            <input name="os" value={newDevice.os} onChange={handleNewDeviceChange} placeholder="Sistema operacional" />
+            <button className="primary" onClick={registerNewDevice}>Adicionar dispositivo</button>
           </div>
         </section>
 
